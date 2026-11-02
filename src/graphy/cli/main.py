@@ -17,6 +17,7 @@ from graphy.llm.harness import AgentHarness
 from graphy.llm.model_manager import ModelLifecycleManager
 from graphy.llm.model_setup import setup_models_volume
 from graphy.parser.pipeline import ingest_textbook
+from graphy.scoring.mastery_updater import load_saved_scores, score_book_and_problems
 
 
 @click.group(help="GRAPHY & GRAPHY Companion — Self-Discovery Learning System for Math, Physics, and CS.")
@@ -155,16 +156,54 @@ def cmd_ingest_problems(
 
 @app.command("build-graph")
 @click.option("--book-id", required=True, help="Target textbook ID to build prerequisite graph for.")
-def cmd_build_graph(book_id: str) -> None:
-    """Filter Top-K chunk pairs, verify prerequisites via Local LLM, and save in GraphAr format."""
+@click.option("--score/--no-score", default=True, help="Also compute chunk and problem foundation JSON scores.")
+def cmd_build_graph(book_id: str, score: bool) -> None:
+    """Filter Top-K chunk pairs, verify prerequisites via Local LLM, save GraphAr, and compute JSON scores."""
     cfg = load_config()
     with ModelLifecycleManager(config=cfg, backend="llama_server") as mgr:
-        summary = build_prerequisite_graph(
+        graph_sum = build_prerequisite_graph(
             book_id=book_id,
             config=cfg,
             model_manager=mgr,
         )
+        result: dict[str, object] = {"graph": graph_sum.model_dump()}
+        if score:
+            score_sum = score_book_and_problems(
+                book_id=book_id,
+                config=cfg,
+                model_manager=mgr,
+            )
+            result["scoring"] = score_sum.model_dump()
+    click.echo(json.dumps(result, indent=2))
+
+
+@app.command("score-book")
+@click.option("--book-id", required=True, help="Target textbook ID to compute JSON scores for.")
+def cmd_score_book(book_id: str) -> None:
+    """Compute chunk_scores.json, problem_chunk_scores.json, and problem_foundation_scores.json."""
+    cfg = load_config()
+    summary = score_book_and_problems(book_id=book_id, config=cfg)
     click.echo(json.dumps(summary.model_dump(), indent=2))
+
+
+@app.command("status")
+@click.option("--book-id", required=True, help="Target textbook ID.")
+def cmd_status(book_id: str) -> None:
+    """Display top foundational chunks, top ranked problems, and mastery progress."""
+    cfg = load_config()
+    chunk_scores, _, problem_scores = load_saved_scores(book_id=book_id, config=cfg)
+    mastered = sum(1 for c in chunk_scores if c.mastery_status == "mastered")
+    solved = sum(1 for p in problem_scores if p.status == "solved")
+    status_payload = {
+        "book_id": book_id,
+        "chunks_total": len(chunk_scores),
+        "chunks_mastered": mastered,
+        "problems_total": len(problem_scores),
+        "problems_solved": solved,
+        "top_foundational_chunks": [c.model_dump() for c in chunk_scores[:5]],
+        "top_foundational_problems": [p.model_dump() for p in problem_scores[:4]],
+    }
+    click.echo(json.dumps(status_payload, indent=2))
 
 
 if __name__ == "__main__":

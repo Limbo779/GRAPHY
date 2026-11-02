@@ -1,0 +1,51 @@
+{
+  "description": "JSON Schema definitions for GRAPHY score artifacts in data/scores/<book_id>/",
+  "artifacts": {
+    "chunk_scores.json": {
+      "type": "array",
+      "items": {
+        "required": [
+          "chunk_id",
+          "book_id",
+          "chunk_index",
+          "breadcrumb",
+          "out_weight",
+          "in_weight",
+          "raw_foundation_score",
+          "normalized_foundation_score",
+          "rank",
+          "mastery_status"
+        ]
+      }
+    },
+    "problem_chunk_scores.json": {
+      "type": "array",
+      "items": {
+        "required": [
+          "problem_id",
+          "book_id",
+          "source_id",
+          "original_number",
+          "matched_chunks"
+        ]
+      }
+    },
+    "problem_foundation_scores.json": {
+      "type": "array",
+      "items": {
+        "required": [
+          "problem_id",
+          "book_id",
+          "source_id",
+          "original_number",
+          "net_foundationness_score",
+          "weighted_avg_foundationness",
+          "raw_net_foundationness_score",
+          "primary_chunk_ids",
+          "rank",
+          "status"
+        ]
+      }
+    }
+  }
+}

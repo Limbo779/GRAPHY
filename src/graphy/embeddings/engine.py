@@ -168,17 +168,15 @@ class TechnicalEmbeddingEngine:
         for ident in code_idents:
             feature_weights[f"code:{ident.lower()}"] = 2.5
 
-        # Project weighted features into dense `dim`-dimensional vector via signed SHA-256 hashing
+        # Project weighted features into dense `dim`-dimensional non-negative vector
+        # Using non-negative multi-index hashing guarantees shared terms/symbols never cancel out
         vec = [0.0] * dim
         for feat, weight in feature_weights.items():
             digest = hashlib.sha256(feat.encode("utf-8")).digest()
-            # Project each feature onto 2 orthogonal coordinates to minimize hash collisions
             idx1 = int.from_bytes(digest[0:4], "little") % dim
-            sign1 = 1.0 if (digest[4] & 1) == 0 else -1.0
             idx2 = int.from_bytes(digest[8:12], "little") % dim
-            sign2 = 1.0 if (digest[12] & 1) == 0 else -1.0
-            vec[idx1] += sign1 * weight
-            vec[idx2] += sign2 * (weight * 0.5)
+            vec[idx1] += weight
+            vec[idx2] += weight * 0.5
 
         norm = math.sqrt(sum(v * v for v in vec)) or 1.0
         return [round(v / norm, 7) for v in vec]
