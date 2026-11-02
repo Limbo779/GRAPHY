@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import click
 
+from graphy.companion.models import ProblemSourceType
+from graphy.companion.pipeline import ingest_problem_set
 from graphy.core.config import load_config
 from graphy.core.hardware import probe_hardware, render_hardware_table
 from graphy.embeddings.engine import EmbeddingMode
@@ -101,7 +103,7 @@ def cmd_llm_test() -> None:
     help="Embedding backend mode.",
 )
 def cmd_ingest_book(file_path: str, book_id: str, embedding_mode: EmbeddingMode) -> None:
-    """Parse a textbook (.pdf, .tex, .md), separate exercises, chunk atomically, and embed."""
+    """Parse a textbook (.pdf, .tex, .md), route exercises to Companion, chunk, and embed."""
     cfg = load_config()
     if embedding_mode in ("hybrid", "llama_vulkan"):
         with ModelLifecycleManager(config=cfg, backend="llama_server") as mgr:
@@ -119,6 +121,34 @@ def cmd_ingest_book(file_path: str, book_id: str, embedding_mode: EmbeddingMode)
             config=cfg,
             embedding_mode=embedding_mode,
         )
+    click.echo(json.dumps(summary.model_dump(), indent=2))
+
+
+@app.command("ingest-problems")
+@click.argument("file_path")
+@click.option("--book-id", required=True, help="Target textbook ID to attach these problems to.")
+@click.option("--source-id", default=None, help="Identifier for this problem set or exam.")
+@click.option(
+    "--source-type",
+    type=click.Choice(["external_assignment", "external_exam", "textbook_exercise"]),
+    default="external_assignment",
+    help="Type of problem set source.",
+)
+def cmd_ingest_problems(
+    file_path: str,
+    book_id: str,
+    source_id: str | None,
+    source_type: ProblemSourceType,
+) -> None:
+    """Run GRAPHY Companion on an external problem set / exam (.pdf, .tex, .md)."""
+    cfg = load_config()
+    summary = ingest_problem_set(
+        file_path=file_path,
+        book_id=book_id,
+        source_id=source_id,
+        source_type=source_type,
+        config=cfg,
+    )
     click.echo(json.dumps(summary.model_dump(), indent=2))
 
 

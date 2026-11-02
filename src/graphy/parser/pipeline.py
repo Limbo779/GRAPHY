@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 from pydantic import BaseModel
 
+from graphy.companion.pipeline import ingest_routed_textbook_exercises
 from graphy.core.config import GraphyConfig, load_config
 from graphy.embeddings.engine import EmbeddingMode, TechnicalEmbeddingEngine
 from graphy.embeddings.vector_store import EmbeddedVectorStore
@@ -24,9 +25,11 @@ class BookIngestionSummary(BaseModel):
     sections_parsed: int
     chunks_created: int
     exercise_blocks_routed: int
+    companion_problems_extracted: int = 0
     figures_extracted: int
     chunks_json_path: str
     exercises_json_path: str
+    problems_json_path: Optional[str] = None
     vector_db_path: str
 
 
@@ -38,7 +41,7 @@ def ingest_textbook(
     model_manager: Optional[ModelLifecycleManager] = None,
     base_dir: Optional[Path] = None,
 ) -> BookIngestionSummary:
-    """Ingest a Math, Physics, or CS textbook into atomic chunks, vectors, and separated exercise blocks."""
+    """Ingest a Math, Physics, or CS textbook into atomic chunks, vectors, and Companion problem sets."""
     cfg = config or load_config()
     root = base_dir or Path(".")
     cfg.ensure_Runtime_dirs(base_dir=root)
@@ -61,6 +64,17 @@ def ingest_textbook(
         ),
         encoding="utf-8",
     )
+
+    companion_count = 0
+    problems_json_str: Optional[str] = None
+    if cfg.chunking.route_exercises_to_companion and parsed_doc.exercise_blocks:
+        comp_summary = ingest_routed_textbook_exercises(
+            book_id=book_id,
+            config=cfg,
+            base_dir=root,
+        )
+        companion_count = comp_summary.problems_extracted
+        problems_json_str = comp_summary.output_json_path
 
     chunker = SemanticTextbookChunker(config=cfg.chunking)
     chunks = chunker.chunk_document(parsed_doc)
@@ -87,8 +101,10 @@ def ingest_textbook(
         sections_parsed=len(parsed_doc.sections),
         chunks_created=len(chunks),
         exercise_blocks_routed=len(parsed_doc.exercise_blocks),
+        companion_problems_extracted=companion_count,
         figures_extracted=len(parsed_doc.figures),
         chunks_json_path=str(chunks_json_path),
         exercises_json_path=str(exercises_json_path),
+        problems_json_path=problems_json_str,
         vector_db_path=str(vstore.db_path),
     )
