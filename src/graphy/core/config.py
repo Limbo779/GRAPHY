@@ -22,6 +22,7 @@ class GPUConfig(BaseModel):
     vendor_id: str = "0x8086"
     device_name: str = "Intel Iris Xe Graphics"
     dri_render_node: str = "/dev/dri/renderD128"
+    vulkan_device: str = "Vulkan0"
     backend_preference: List[str] = Field(
         default_factory=lambda: ["vulkan", "sycl", "openvino", "cpu_avx2_vnni"]
     )
@@ -40,33 +41,43 @@ class HardwareConfig(BaseModel):
     llm_batch_threads: int = 10
     embedding_threads: int = 8
     max_container_ram_gib: float = 6.5
-    min_free_ram_for_llm_gib: float = 3.0
+    min_free_ram_for_llm_gib: float = 2.5
     gpu: GPUConfig = Field(default_factory=GPUConfig)
 
 
 class LLMModelConfig(BaseModel):
-    repo_id: str = "Qwen/Qwen2.5-3B-Instruct-GGUF"
-    filename: str = "qwen2.5-3b-instruct-q4_k_m.gguf"
+    repo_id: str = "Qwen/Qwen2-7B-Instruct-GGUF"
+    filename: str = "qwen2-7b-instruct.gguf"
+    reasoning_filename: str = "deepseek-r1-qwen3-8b.gguf"
     context_window: int = 4096
-    gpu_layers: int = 20
+    gpu_layers: int = 18
     temperature: float = 0.1
 
 
 class EmbeddingModelConfig(BaseModel):
-    repo_id: str = "BAAI/bge-small-en-v1.5"
-    backend: str = "onnx"
-    dimension: int = 384
-    max_seq_length: int = 512
-    batch_size: int = 16
+    repo_id: str = "Qwen/Qwen2-7B-Instruct-GGUF"
+    filename: str = "qwen2-7b-instruct.gguf"
+    backend: str = "llama_vulkan"
+    dimension: int = 3584
+    gpu_layers: int = 99
+    max_seq_length: int = 2048
+    batch_size: int = 8
 
 
 class OCRModelConfig(BaseModel):
-    vlm_repo_id: str = "Qwen/Qwen2.5-VL-3B-Instruct-GGUF"
+    vlm_repo_id: str = "openbmb/MiniCPM-V-2_6-GGUF"
+    llm_filename: str = "qwen2-7b-instruct.gguf"
+    mmproj_filename: str = "minicpm-v-mmproj.gguf"
+    gpu_layers: int = 15
     require_user_preview: bool = True
 
 
 class ModelsConfig(BaseModel):
     mutual_exclusion_mode: bool = True
+    llama_server_bin: str = "/opt/llama/llama-server"
+    llama_lib_dir: str = "/opt/llama"
+    server_host: str = "127.0.0.1"
+    server_port: int = 18080
     llm: LLMModelConfig = Field(default_factory=LLMModelConfig)
     embedding: EmbeddingModelConfig = Field(default_factory=EmbeddingModelConfig)
     ocr: OCRModelConfig = Field(default_factory=OCRModelConfig)

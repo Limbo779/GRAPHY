@@ -13,6 +13,7 @@ ENV PYTHONUNBUFFERED=1 \
     OMP_NUM_THREADS=8 \
     MKL_NUM_THREADS=8 \
     OPENBLAS_NUM_THREADS=8 \
+    LD_LIBRARY_PATH=/opt/llama:/opt/llama/vulkan \
     GRAPHY_CONFIG_PATH=/app/configs/config.yaml \
     PYTHONPATH=/app/src
 
@@ -52,6 +53,13 @@ RUN pacman --cachedir /var/cache/pacman/pkg --cachedir /cache_extra -S --noconfi
     lapack \
     sqlite
 
+# Copy llama.cpp Vulkan + AlderLake AVX-VNNI + Multimodal runtime into /opt/llama
+RUN mkdir -p /opt/llama && \
+    if [ -d /ai_runtime/lib/ollama ]; then \
+        cp -a /ai_runtime/lib/ollama/* /opt/llama/ && \
+        ln -sf vulkan/libggml-vulkan.so /opt/llama/libggml-vulkan.so; \
+    fi
+
 WORKDIR /app
 
 # Copy project source and configuration
@@ -59,6 +67,7 @@ COPY pyproject.toml /app/pyproject.toml
 COPY requirements.txt /app/requirements.txt
 COPY ideastorm.md /app/ideastorm.md
 COPY configs/ /app/configs/
+COPY scripts/ /app/scripts/
 COPY src/ /app/src/
 COPY tests/ /app/tests/
 COPY data/schemas/ /app/data/schemas/

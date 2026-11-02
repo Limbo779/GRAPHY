@@ -1,22 +1,30 @@
-.PHONY: build hardware config test shell
+.PHONY: build setup-models hardware config llm-test test shell
 
 IMAGE_NAME := localhost/graphy:latest
 EXTRA_PKG_CACHE := /tmp/opencode/pacman_extra
+AI_RUNTIME_CACHE := /tmp/opencode/ai_runtime
 
 build:
-	mkdir -p $(EXTRA_PKG_CACHE)
+	mkdir -p $(EXTRA_PKG_CACHE) $(AI_RUNTIME_CACHE)
 	podman build \
 		-v /var/cache/pacman/pkg:/var/cache/pacman/pkg:ro \
 		-v $(EXTRA_PKG_CACHE):/cache_extra:ro \
+		-v $(AI_RUNTIME_CACHE):/ai_runtime:ro \
 		-v /var/lib/pacman/sync:/var/lib/pacman/sync:ro \
 		-v /etc/pacman.d/mirrorlist:/etc/pacman.d/mirrorlist:ro \
 		-t $(IMAGE_NAME) -f Containerfile .
+
+setup-models:
+	python3 scripts/setup_models.py
 
 hardware:
 	./scripts/podman_run.sh hardware
 
 config:
 	./scripts/podman_run.sh config
+
+llm-test:
+	./scripts/podman_run.sh llm-test
 
 test:
 	podman run --rm \
