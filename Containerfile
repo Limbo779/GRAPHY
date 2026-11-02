@@ -21,6 +21,7 @@ ENV PYTHONUNBUFFERED=1 \
 # BLAS/LAPACK/SQLite, and PDF/OCR tools (Poppler + Tesseract)
 RUN pacman --cachedir /var/cache/pacman/pkg --cachedir /cache_extra -S --noconfirm --needed \
     python \
+    python-cairo \
     python-pydantic \
     python-yaml \
     python-jinja \

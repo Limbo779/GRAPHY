@@ -7,11 +7,13 @@ import click
 
 from graphy.core.config import load_config
 from graphy.core.hardware import probe_hardware, render_hardware_table
+from graphy.embeddings.engine import EmbeddingMode
 from graphy.llm.agents import PrerequisiteJudgeAgent, PrerequisitePairInput
 from graphy.llm.cache import LLMCache
 from graphy.llm.harness import AgentHarness
 from graphy.llm.model_manager import ModelLifecycleManager
 from graphy.llm.model_setup import setup_models_volume
+from graphy.parser.pipeline import ingest_textbook
 
 
 @click.group(help="GRAPHY & GRAPHY Companion — Self-Discovery Learning System for Math, Physics, and CS.")
@@ -87,6 +89,37 @@ def cmd_llm_test() -> None:
                 indent=2,
             )
         )
+
+
+@app.command("ingest-book")
+@click.argument("file_path")
+@click.option("--book-id", required=True, help="Unique identifier for the textbook.")
+@click.option(
+    "--embedding-mode",
+    type=click.Choice(["hybrid", "llama_vulkan", "technical_hash"]),
+    default="hybrid",
+    help="Embedding backend mode.",
+)
+def cmd_ingest_book(file_path: str, book_id: str, embedding_mode: EmbeddingMode) -> None:
+    """Parse a textbook (.pdf, .tex, .md), separate exercises, chunk atomically, and embed."""
+    cfg = load_config()
+    if embedding_mode in ("hybrid", "llama_vulkan"):
+        with ModelLifecycleManager(config=cfg, backend="llama_server") as mgr:
+            summary = ingest_textbook(
+                file_path=file_path,
+                book_id=book_id,
+                config=cfg,
+                embedding_mode=embedding_mode,
+                model_manager=mgr,
+            )
+    else:
+        summary = ingest_textbook(
+            file_path=file_path,
+            book_id=book_id,
+            config=cfg,
+            embedding_mode=embedding_mode,
+        )
+    click.echo(json.dumps(summary.model_dump(), indent=2))
 
 
 if __name__ == "__main__":
