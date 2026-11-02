@@ -1,0 +1,79 @@
+# =============================================================================
+# GRAPHY - Git Ignore Rules
+# Ignore large/generated files so the repository stays lightweight & push-ready
+# =============================================================================
+
+# Python virtual environments & caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local AI Models & Weights (reproducible via model manager script)
+models/
+*.gguf
+*.bin
+*.onnx
+*.safetensors
+*.pt
+*.pth
+*.openvino*
+hf_cache/
+.cache/
+
+# Runtime Data, Textbooks, Problem Sets, & Generated Artifacts
+data/raw/
+data/processed/
+data/graphs/
+data/vectors/
+data/uploads/
+data/sessions/
+*.pdf
+*.epub
+*.djvu
+*.parquet
+*.lance/
+*.lancedb/
+
+# Generated Score JSONs (runtime outputs; sample schemas are tracked)
+data/scores/*.json
+
+# Podman / Container exports & runtime state
+*.tar
+*.tar.gz
+*.tar.zst
+container-export/
+.podman/
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*~
+.vscode/
+.idea/
+*.swp
+*.swo
+.env
+.env.local
