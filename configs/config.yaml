@@ -1,0 +1,82 @@
+# =============================================================================
+# GRAPHY & GRAPHY Companion — Central System Configuration
+# Tuned for: 13th Gen Intel Core i5-1335U (2P+8E / 12 threads), 15 GiB RAM,
+#            Intel Iris Xe Graphics (/dev/dri/renderD128)
+# =============================================================================
+
+system:
+  project_name: "GRAPHY"
+  version: "0.1.0"
+  log_level: "INFO"
+  data_dir: "data"
+  models_dir: "models"
+
+hardware:
+  target_cpu_arch: "x86_64"
+  total_logical_cpus: 12
+  physical_cores: 10
+  p_core_threads: [0, 1, 2, 3]
+  p_core_physical: [0, 2]
+  e_core_physical: [4, 5, 6, 7, 8, 9, 10, 11]
+  # Optimal thread counts for hybrid i5-1335U architecture
+  llm_generation_threads: 8
+  llm_batch_threads: 10
+  embedding_threads: 8
+  # Strict RAM budget (GiB) to prevent swap thrashing on 15 GiB shared memory
+  max_container_ram_gib: 6.5
+  min_free_ram_for_llm_gib: 3.0
+  gpu:
+    enabled: true
+    vendor_id: "0x8086"
+    device_name: "Intel Iris Xe Graphics"
+    dri_render_node: "/dev/dri/renderD128"
+    backend_preference: ["vulkan", "sycl", "openvino", "cpu_avx2_vnni"]
+
+models:
+  mutual_exclusion_mode: true
+  llm:
+    repo_id: "Qwen/Qwen2.5-3B-Instruct-GGUF"
+    filename: "qwen2.5-3b-instruct-q4_k_m.gguf"
+    context_window: 4096
+    gpu_layers: 20
+    temperature: 0.1
+  embedding:
+    repo_id: "BAAI/bge-small-en-v1.5"
+    backend: "onnx"
+    dimension: 384
+    max_seq_length: 512
+    batch_size: 16
+  ocr:
+    vlm_repo_id: "Qwen/Qwen2.5-VL-3B-Instruct-GGUF"
+    require_user_preview: true
+
+chunking:
+  target_tokens: 550
+  min_tokens: 180
+  max_tokens: 900
+  overlap_tokens: 60
+  preserve_atomic_blocks: true
+  route_exercises_to_companion: true
+
+companion:
+  keep_multipart_together: true
+  quarantine_hints_and_solutions: true
+  supported_formats: ["pdf", "tex", "md"]
+
+graph:
+  storage_format: "graphar"
+  top_k_candidates: 12
+  similarity_threshold: 0.45
+  break_cycles: true
+
+scoring:
+  normalization_epsilon: 0.05
+  problem_top_k_chunks: 5
+  problem_similarity_threshold: 0.35
+  batch_problem_count: 4
+  dynamic_mastery_update: true
+
+web:
+  host: "0.0.0.0"
+  port: 8080
+  offline_katex: true

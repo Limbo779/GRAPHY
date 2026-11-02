@@ -1,0 +1,33 @@
+# =============================================================================
+# GRAPHY Rootless Podman Compose Specification
+# Passes Intel Iris Xe (/dev/dri) and mounts persistent host volumes
+# =============================================================================
+version: "3.9"
+
+services:
+  graphy:
+    image: localhost/graphy:latest
+    container_name: graphy
+    build:
+      context: .
+      dockerfile: Containerfile
+    userns_mode: "keep-id"
+    security_opt:
+      - label=disable
+    group_add:
+      - keep-groups
+    devices:
+      - /dev/dri:/dev/dri:rw
+    environment:
+      - GRAPHY_CONFIG_PATH=/app/configs/config.yaml
+      - OMP_NUM_THREADS=8
+      - OPENBLAS_NUM_THREADS=8
+    volumes:
+      - ./models:/app/models:rw
+      - ./data:/app/data:rw
+      - ./configs:/app/configs:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    mem_limit: 8g
+    memswap_limit: 8g
+    command: ["hardware"]
