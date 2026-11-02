@@ -28,7 +28,7 @@ SUBSECTION_HEADING_RE = re.compile(
     r"^(?:###\s+|\\subsection\*?\{|(\d+\.\d+\.\d+)\s+[A-Z])(.*)$"
 )
 EXERCISE_HEADING_RE = re.compile(
-    r"^(?:#{1,4}\s*|\\(?:section|subsection)\*?\{)?\s*"
+    r"^(?:#{1,4}\s*|\\(?:section|subsection)\*?\{|\\begin\{)?\s*"
     r"(Exercises|Problems|Review\s+Problems|Problem\s+Set|Practice\s+Problems|Chapter\s+\d+\s+Exercises)"
     r"(?:\s+for\s+[\w.\s]+)?\}?\s*:?\s*$",
     re.IGNORECASE,
@@ -344,6 +344,12 @@ class TechnicalDocumentParser:
                         ex_lines.append(line)
                     else:
                         sec_lines.append(line)
+                    continue
+
+                if re.match(r"^\\end\{(?:exercises|problems)\}", stripped, re.IGNORECASE):
+                    if in_exercises:
+                        flush_exercises(page_idx)
+                        in_exercises = False
                     continue
 
                 # Check if this line starts an Exercise / Problem Set block

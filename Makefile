@@ -37,6 +37,12 @@ test:
 		-v "$(CURDIR)/configs:/app/configs:ro" \
 		-v "$(CURDIR)/src:/app/src:ro" \
 		-v "$(CURDIR)/tests:/app/tests:ro" \
+		-v "$(CURDIR)/scripts:/app/scripts:ro" \
+		-v "$(CURDIR)/docs:/app/docs:ro" \
+		-v "$(CURDIR)/README.md:/app/README.md:ro" \
+		-v "$(CURDIR)/CONTAINER_DETAILS.md:/app/CONTAINER_DETAILS.md:ro" \
+		-v "$(CURDIR)/Containerfile:/app/Containerfile:ro" \
+		-v "$(CURDIR)/compose.yaml:/app/compose.yaml:ro" \
 		--entrypoint python3 \
 		$(IMAGE_NAME) -m unittest discover -s /app/tests -v
 
