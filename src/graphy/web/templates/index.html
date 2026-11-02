@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GRAPHY &amp; GRAPHY Companion — Self-Discovery Learning System</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --success: #3fb950;
+      --warn: #d29922;
+      --danger: #f85149;
+      --code-bg: #010409;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 1.35rem; color: var(--accent); }
+    .badge {
+      background: #1f2937;
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    main {
+      max-width: 1320px;
+      margin: 1.5rem auto;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      color: var(--accent);
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 0.75rem; }
+    input[type="text"], select, textarea {
+      width: 100%;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      margin-top: 0.25rem;
+      font-family: inherit;
+    }
+    textarea {
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      min-height: 100px;
+      resize: vertical;
+    }
+    button {
+      background: #238636;
+      color: #fff;
+      border: 1px solid rgba(240,246,252,0.1);
+      padding: 0.55rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 0.75rem;
+    }
+    button.secondary { background: #1f6feb; }
+    button:hover { opacity: 0.92; }
+    .math-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.9rem 1rem;
+      margin: 0.65rem 0;
+      overflow-x: auto;
+    }
+    .problem-card {
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .ocr-preview-box {
+      background: #1c2128;
+      border: 1px dashed var(--warn);
+      border-radius: 6px;
+      padding: 0.85rem;
+      margin-top: 0.6rem;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th { color: var(--muted); }
+    pre {
+      background: var(--code-bg);
+      padding: 0.75rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>GRAPHY &amp; GRAPHY Companion</h1>
+      <small style="color: var(--muted);">Problem-Solving &amp; Self-Discovery Learning Engine (Math, Physics, CS)</small>
+    </div>
+    <div id="hw-badge" class="badge">Probing Hardware...</div>
+  </header>
+
+  <main>
+    <!-- Left Sidebar: Book Selection, Pipeline Controls & Foundation Scores -->
+    <section>
+      <div class="card">
+        <h2>1. Active Textbook &amp; Companion</h2>
+        <label for="book-select">Select Ingested Book</label>
+        <select id="book-select" onchange="loadBookScores()"></select>
+        <button class="secondary" style="width:100%;" onclick="startStudyBatch()">Start Top-4 Problem Study Batch</button>
+      </div>
+
+      <div class="card">
+        <h2>2. Top Foundational Chunks</h2>
+        <div id="chunks-table-wrap" style="max-height: 260px; overflow-y: auto;">
+          <small style="color: var(--muted);">Select a book to view chunk foundation scores.</small>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>3. Ranked Problems (Foundationness)</h2>
+        <div id="problems-table-wrap" style="max-height: 300px; overflow-y: auto;">
+          <small style="color: var(--muted);">Select a book to view problem foundationness rankings.</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Workspace: Bare-Minimum Briefing, 4 Problems, Handwritten OCR Preview & Evaluation -->
+    <section>
+      <div class="card" id="briefing-card">
+        <h2>Bare-Minimum Concepts Briefing (Self-Discovery Mode)</h2>
+        <div id="briefing-content">
+          <p style="color: var(--muted);">
+            Click <strong>Start Top-4 Problem Study Batch</strong> to receive the bare-minimum prerequisites for the top 4 foundational problems. Core synthesis topics are held back for you to self-discover while solving!
+          </p>
+        </div>
+      </div>
+
+      <div class="card" id="problems-workspace" style="display:none;">
+        <h2>Active 4-Problem Set &amp; Solution Workspace</h2>
+        <div id="problems-list"></div>
+        <button onclick="evaluateSolutions()" style="width: 100%; padding: 0.8rem; font-size: 1rem;">
+          Submit &amp; Analyze All Solutions
+        </button>
+      </div>
+
+      <div class="card" id="evaluation-card" style="display:none;">
+        <h2>Solution Analysis &amp; Self-Discovery Report</h2>
+        <div id="evaluation-content"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let currentBookId = "";
+    let currentSessionId = "";
+    let currentProblems = [];
+
+    // Offline fallback LaTeX formatter when CDN KaTeX is unreachable
+    function formatMathText(mdText) {
+      if (!mdText) return "";
+      let html = mdText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/```([\w+-]*)\n([\s\S]*?)```/g, "<pre><code>$2</code></pre>")
+        .replace(/\n/g, "<br/>");
+      return html;
+    }
+
+    function triggerMathRender(el) {
+      if (window.renderMathInElement) {
+        window.renderMathInElement(el, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
+    async function initApp() {
+      const hwRes = await fetch("/api/health");
+      const hw = await hwRes.json();
+      document.getElementById("hw-badge").textContent =
+        `${hw.cpu_model} | RAM Safe Budget: ${hw.safe_ram_gib} GiB | Intel Iris Xe: ${hw.iris_xe ? "Active" : "CPU"}`;
+
+      const booksRes = await fetch("/api/books");
+      const booksData = await booksRes.json();
+      const sel = document.getElementById("book-select");
+      sel.innerHTML = "";
+      (booksData.books || []).forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b;
+        opt.textContent = b;
+        sel.appendChild(opt);
+      });
+      if (booksData.books && booksData.books.length > 0) {
+        currentBookId = booksData.books[0];
+        await loadBookScores();
+      }
+    }
+
+    async function loadBookScores() {
+      const sel = document.getElementById("book-select");
+      currentBookId = sel.value;
+      if (!currentBookId) return;
+
+      const res = await fetch(`/api/books/${encodeURIComponent(currentBookId)}/scores`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const cWrap = document.getElementById("chunks-table-wrap");
+      let cHtml = "<table><thead><tr><th>#</th><th>Chunk</th><th>Raw</th><th>Norm</th><th>Status</th></tr></thead><tbody>";
+      (data.chunk_scores || []).forEach(c => {
+        cHtml += `<tr>
+          <td>${c.rank}</td>
+          <td title="${c.breadcrumb}">${c.chunk_id}</td>
+          <td>${c.raw_foundation_score.toFixed(2)}</td>
+          <td>${c.normalized_foundation_score.toFixed(2)}</td>
+          <td>${c.mastery_status}</td>
+        </tr>`;
+      });
+      cHtml += "</tbody></table>";
+      cWrap.innerHTML = cHtml;
+
+      const pWrap = document.getElementById("problems-table-wrap");
+      let pHtml = "<table><thead><tr><th>#</th><th>Problem</th><th>Score</th><th>Status</th></tr></thead><tbody>";
+      (data.problem_foundation_scores || []).forEach(p => {
+        pHtml += `<tr>
+          <td>${p.rank}</td>
+          <td>${p.original_number} (${p.subparts.join(",") || "single"})</td>
+          <td>${p.net_foundationness_score.toFixed(3)}</td>
+          <td>${p.status}</td>
+        </tr>`;
+      });
+      pHtml += "</tbody></table>";
+      pWrap.innerHTML = pHtml;
+    }
+
+    async function startStudyBatch() {
+      if (!currentBookId) return;
+      const res = await fetch(`/api/books/${encodeURIComponent(currentBookId)}/study/start`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({})
+      });
+      const briefing = await res.json();
+      if (!res.ok) {
+        alert(briefing.error || "Could not start study session.");
+        return;
+      }
+      renderBriefingAndProblems(briefing);
+    }
+
+    function renderBriefingAndProblems(briefing) {
+      currentSessionId = briefing.session_id;
+      currentProblems = briefing.problems || [];
+
+      const bDiv = document.getElementById("briefing-content");
+      let bHtml = `<p><span class="badge">Session: ${briefing.session_id}</span></p>`;
+      (briefing.bare_minimum_topics || []).forEach(t => {
+        bHtml += `<div class="math-box"><strong>${t.title}</strong><br/>${formatMathText(t.summary_md)}</div>`;
+      });
+      bDiv.innerHTML = bHtml;
+      triggerMathRender(bDiv);
+
+      const pList = document.getElementById("problems-list");
+      let pHtml = "";
+      currentProblems.forEach(p => {
+        pHtml += `
+          <div class="problem-card">
+            <h3>${p.original_number} <span class="badge">Foundationness: ${p.net_foundationness_score.toFixed(3)}</span></h3>
+            <div class="math-box">${formatMathText(p.statement_md)}</div>
+            <label>Typed Markdown / LaTeX / Code Solution:</label>
+            <textarea id="sol-${p.problem_id}" placeholder="Write your derivation in Markdown + LaTeX ($...$, $$...$$) or upload a photo of handwritten work below..."></textarea>
+
+            <label>Or Upload Handwritten Solution Image (Preview &amp; Confirm LaTeX):</label>
+            <input type="file" id="file-${p.problem_id}" accept="image/*" onchange="uploadHandwrittenImage('${p.problem_id}')" />
+            <div id="ocr-box-${p.problem_id}" class="ocr-preview-box" style="display:none;">
+              <strong>Handwritten Math-OCR LaTeX Preview (Review &amp; Confirm before grading):</strong>
+              <textarea id="ocr-edit-${p.problem_id}"></textarea>
+              <button class="secondary" onclick="confirmOcr('${p.problem_id}')">Confirm OCR Transcription</button>
+              <span id="ocr-status-${p.problem_id}" style="margin-left: 0.75rem; font-size: 0.85rem;"></span>
+            </div>
+          </div>
+        `;
+      });
+      pList.innerHTML = pHtml;
+      document.getElementById("problems-workspace").style.display = "block";
+      triggerMathRender(pList);
+    }
+
+    async function uploadHandwrittenImage(problemId) {
+      const fileInput = document.getElementById(`file-${problemId}`);
+      if (!fileInput.files || fileInput.files.length === 0) return;
+
+      const formData = new FormData();
+      formData.append("problem_id", problemId);
+      formData.append("image", fileInput.files[0]);
+
+      const res = await fetch(
+        `/api/books/${encodeURIComponent(currentBookId)}/study/${encodeURIComponent(currentSessionId)}/ocr-preview`,
+        { method: "POST", body: formData }
+      );
+      const preview = await res.json();
+      if (!res.ok) {
+        alert(preview.error || "OCR preview failed");
+        return;
+      }
+
+      document.getElementById(`ocr-box-${problemId}`).style.display = "block";
+      document.getElementById(`ocr-edit-${problemId}`).value = preview.edited_latex_md;
+      document.getElementById(`ocr-status-${problemId}`).textContent = "Awaiting confirmation...";
+    }
+
+    async function confirmOcr(problemId) {
+      const editedText = document.getElementById(`ocr-edit-${problemId}`).value;
+      const res = await fetch(
+        `/api/books/${encodeURIComponent(currentBookId)}/study/${encodeURIComponent(currentSessionId)}/ocr-confirm`,
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ problem_id: problemId, edited_latex_md: editedText })
+        }
+      );
+      const confirmed = await res.json();
+      if (res.ok) {
+        document.getElementById(`sol-${problemId}`).value = confirmed.edited_latex_md;
+        document.getElementById(`ocr-status-${problemId}`).textContent = "Confirmed!";
+      }
+    }
+
+    async function evaluateSolutions() {
+      const solutions = {};
+      currentProblems.forEach(p => {
+        const val = document.getElementById(`sol-${p.problem_id}`).value;
+        if (val && val.trim()) {
+          solutions[p.problem_id] = val.trim();
+        }
+      });
+
+      const res = await fetch(
+        `/api/books/${encodeURIComponent(currentBookId)}/study/${encodeURIComponent(currentSessionId)}/evaluate`,
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ solutions })
+        }
+      );
+      const report = await res.json();
+      if (!res.ok) {
+        alert(report.error || "Evaluation failed");
+        return;
+      }
+
+      const evalCard = document.getElementById("evaluation-card");
+      const evalDiv = document.getElementById("evaluation-content");
+      evalCard.style.display = "block";
+
+      let html = `<p><strong>Outcome:</strong> <span class="badge">${report.outcome}</span> (Score: ${(report.score_fraction * 100).toFixed(0)}%)</p>`;
+      html += `<div class="math-box">${formatMathText(report.feedback_summary_md)}</div>`;
+
+      if (report.undiscovered_topics_to_teach && report.undiscovered_topics_to_teach.length > 0) {
+        html += `<h3>Undiscovered Topics Revealed</h3>`;
+        report.undiscovered_topics_to_teach.forEach(t => {
+          html += `<div class="math-box"><strong>${t.topic}</strong><br/>${formatMathText(t.explanation_md)}</div>`;
+        });
+      }
+
+      if (report.remedial_scaffolding_topics && report.remedial_scaffolding_topics.length > 0) {
+        html += `<h3>Remedial &amp; Prerequisite Scaffolding (To Help You Not Struggle)</h3>`;
+        report.remedial_scaffolding_topics.forEach(t => {
+          html += `<div class="math-box"><strong>${t.topic}</strong><br/>${formatMathText(t.explanation_md)}</div>`;
+        });
+      }
+
+      evalDiv.innerHTML = html;
+      triggerMathRender(evalDiv);
+      await loadBookScores();
+
+      if (report.next_batch_briefing) {
+        renderBriefingAndProblems(report.next_batch_briefing);
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>

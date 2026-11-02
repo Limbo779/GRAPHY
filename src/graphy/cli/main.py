@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import click
 
 from graphy.companion.models import ProblemSourceType
@@ -18,6 +19,8 @@ from graphy.llm.model_manager import ModelLifecycleManager
 from graphy.llm.model_setup import setup_models_volume
 from graphy.parser.pipeline import ingest_textbook
 from graphy.scoring.mastery_updater import load_saved_scores, score_book_and_problems
+from graphy.tutor.session_manager import StudySessionManager
+from graphy.web.app import run_web_server
 
 
 @click.group(help="GRAPHY & GRAPHY Companion — Self-Discovery Learning System for Math, Physics, and CS.")
@@ -204,6 +207,88 @@ def cmd_status(book_id: str) -> None:
         "top_foundational_problems": [p.model_dump() for p in problem_scores[:4]],
     }
     click.echo(json.dumps(status_payload, indent=2))
+
+
+@app.command("study-start")
+@click.option("--book-id", required=True, help="Target textbook ID.")
+@click.option("--batch-size", default=None, type=int, help="Number of top foundational problems (default 4).")
+def cmd_study_start(book_id: str, batch_size: int | None) -> None:
+    """Select the top 4 foundational problems and generate bare-minimum self-discovery concepts."""
+    cfg = load_config()
+    with ModelLifecycleManager(config=cfg, backend="llama_server") as mgr:
+        tutor = StudySessionManager(book_id=book_id, config=cfg, model_manager=mgr)
+        session = tutor.start_next_batch(batch_size=batch_size)
+        if session is None:
+            click.echo(json.dumps({"message": "All problems are already solved!"}))
+            return
+        click.echo(json.dumps(session.to_learner_briefing().model_dump(mode="json"), indent=2))
+
+
+@app.command("study-ocr")
+@click.option("--book-id", required=True, help="Target textbook ID.")
+@click.option("--session-id", required=True, help="Active study session ID.")
+@click.option("--problem-id", required=True, help="Problem ID for the handwritten work.")
+@click.option("--image", "image_path", required=True, help="Path to handwritten solution image.")
+@click.option("--confirm", is_flag=True, help="Immediately confirm the OCR transcription.")
+@click.option("--edited-text", default=None, help="Optional user-edited LaTeX/Markdown when confirming.")
+def cmd_study_ocr(
+    book_id: str,
+    session_id: str,
+    problem_id: str,
+    image_path: str,
+    confirm: bool,
+    edited_text: str | None,
+) -> None:
+    """Preview (and optionally confirm) Handwritten Math-OCR transcription for a solution image."""
+    cfg = load_config()
+    with ModelLifecycleManager(config=cfg, backend="llama_server") as mgr:
+        tutor = StudySessionManager(book_id=book_id, config=cfg, model_manager=mgr)
+        preview = tutor.preview_handwritten_solution(
+            session_id=session_id,
+            problem_id=problem_id,
+            image_path=image_path,
+            use_vlm=True,
+        )
+        if confirm or edited_text is not None:
+            preview = tutor.confirm_handwritten_solution(
+                session_id=session_id,
+                problem_id=problem_id,
+                edited_latex_md=edited_text,
+            )
+        click.echo(json.dumps(preview.model_dump(mode="json"), indent=2))
+
+
+@app.command("study-submit")
+@click.option("--book-id", required=True, help="Target textbook ID.")
+@click.option("--session-id", required=True, help="Active study session ID.")
+@click.option(
+    "--solutions-json",
+    required=True,
+    help="JSON string or path to JSON file mapping problem_id -> solution_md.",
+)
+def cmd_study_submit(book_id: str, session_id: str, solutions_json: str) -> None:
+    """Submit solutions for the 4-problem batch and receive self-discovery / remedial analysis."""
+    cfg = load_config()
+    sol_path = Path(solutions_json)
+    if sol_path.is_file():
+        solutions_map = json.loads(sol_path.read_text(encoding="utf-8"))
+    else:
+        solutions_map = json.loads(solutions_json)
+
+    with ModelLifecycleManager(config=cfg, backend="llama_server") as mgr:
+        tutor = StudySessionManager(book_id=book_id, config=cfg, model_manager=mgr)
+        tutor.submit_text_solutions(session_id=session_id, solutions_by_problem_id=solutions_map)
+        report = tutor.evaluate_batch_solutions(session_id=session_id)
+        click.echo(json.dumps(report.model_dump(mode="json"), indent=2))
+
+
+@app.command("serve")
+@click.option("--host", default="0.0.0.0", help="Bind host for Local Web UI.")
+@click.option("--port", default=8080, type=int, help="Port for Local Web UI.")
+def cmd_serve(host: str, port: int) -> None:
+    """Launch the Lightweight Local KaTeX Web UI."""
+    cfg = load_config()
+    run_web_server(host=host, port=port, config=cfg)
 
 
 if __name__ == "__main__":
