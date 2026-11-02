@@ -10,6 +10,7 @@ from graphy.companion.pipeline import ingest_problem_set
 from graphy.core.config import load_config
 from graphy.core.hardware import probe_hardware, render_hardware_table
 from graphy.embeddings.engine import EmbeddingMode
+from graphy.graph.prerequisite_builder import build_prerequisite_graph
 from graphy.llm.agents import PrerequisiteJudgeAgent, PrerequisitePairInput
 from graphy.llm.cache import LLMCache
 from graphy.llm.harness import AgentHarness
@@ -149,6 +150,20 @@ def cmd_ingest_problems(
         source_type=source_type,
         config=cfg,
     )
+    click.echo(json.dumps(summary.model_dump(), indent=2))
+
+
+@app.command("build-graph")
+@click.option("--book-id", required=True, help="Target textbook ID to build prerequisite graph for.")
+def cmd_build_graph(book_id: str) -> None:
+    """Filter Top-K chunk pairs, verify prerequisites via Local LLM, and save in GraphAr format."""
+    cfg = load_config()
+    with ModelLifecycleManager(config=cfg, backend="llama_server") as mgr:
+        summary = build_prerequisite_graph(
+            book_id=book_id,
+            config=cfg,
+            model_manager=mgr,
+        )
     click.echo(json.dumps(summary.model_dump(), indent=2))
 
 

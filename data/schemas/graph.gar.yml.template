@@ -1,0 +1,7 @@
+# Apache GraphAr v1 Descriptor Template for GRAPHY Knowledge Prerequisite Graphs
+name: "<book_id>"
+version: "gar/v1"
+vertices:
+  - "chunk.vertex.yml"
+edges:
+  - "chunk_prereq_chunk.edge.yml"
